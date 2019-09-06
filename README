@@ -1,0 +1,25 @@
+Please visit http://sqlsus.sourceforge.net/
+
+Feedback, bug reports, feature requests, and greetings are very welcome ! 
+
+--
+
+sqlsus has been designed to work on Linux. If it works on other platforms, that's good.
+If it doesn't work on your platform, well.. grab a Linux box.
+
+You will need the following perl modules :
+
+    * LWP::UserAgent
+    * DBD::SQLite
+    * HTML::LinkExtractor
+    * LWP::Protocol::socks (for socks proxy support)
+
+And a proper Term::ReadLine package is definitely recommended (yet not mandatory)
+
+You will probably also want to install sqlite3, the command line interface for SQLite 3.
+
+Or, if you are on a debian system :
+
+apt-get install libwww-perl libdbd-sqlite3-perl libhtml-linkextractor-perl libterm-readline-gnu-perl liblwp-protocol-socks-perl sqlite3
+
+It also requires previous SQL injection knowledge, and.. well.. a brain helps.

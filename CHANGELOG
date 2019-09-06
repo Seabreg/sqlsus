@@ -1,0 +1,197 @@
+Version 0.7.2
+=============
+Bug Fixes
+---------
+Fixed display of "autoconf max_sendable" so that it won't show on multiple lines on terminals wrapping at 80 chars.
+Fixed the regex cutting the queries which could get cut wrong in some rare cases (e.g. : last column of a table named after a SQL SELECT end keyword).
+
+
+Version 0.7.1
+=============
+Bug Fixes
+---------
+Fixed the progress display so that it won't show on multiple lines on terminals wrapping at 80 chars.
+Setting the proxy to a wrong value (not an absolute URI) now throws an error rather than trying to load it (which hangs).
+
+
+Version 0.7
+===========
+New Features / Improvements
+---------------------------
+Added time-based blind injection support (added option "blind_sleep", and renamed "string_to_match" to "blind_string").
+It is now possible to force sqlsus to exit when it's hanging (i.e.: retrieving data), by hitting Ctrl-C more than twice.
+Rewrite of "autoconf max_sendable", so that sqlsus will properly detect which length restriction applies (WEB server / layer underneath). (removed option "max_sendable", added options "max_url_length" and "max_inj_length")
+Uploading a file now sends it into chunks under the length restriction.
+sqlsus now saves variables after each command, so that forcing it to quit (or killing it) will not discard the changes that were made.
+Added a progress bar to inband mode, sqlsus now determines the number of rows to be returned prior to fetching them.
+get db (tables/columns) in inband mode now uses multithreading (like everything else).
+clone now uses count(*) if available (set by "get count" / "get db"), instead of using fetch-ahead.
+In blind mode, "start" will now test if things work the way they should, by injecting 2 queries : one true and one false.
+sqlsus now prints which configuration options are overriden (when a saved value differs from the configuration file).
+
+Bug Fixes
+---------
+Fixed some misuse of the object returned by LWP UserAgent that could trigger a perl error.
+Fixed a useless memory consumption in the IPC that could trigger an "out of memory" error (since 0.5RC1).
+Removed a false error display in backdoor sql mode when using INSERT, UPDATE, DELETE, DROP, etc..
+
+
+Version 0.6
+===========
+New Features / Improvements
+---------------------------
+Added socks proxy support (and replaced the "http_proxy" variable by "proxy").
+The website crawler has been rewritten from scratch, fixing quite a few bugs in the process. As a result sqlsus now depends on HTML::LinkExtractor instead of WWW::Mechanize.
+"autoconf max_sendable" now tests how much can be sent through the injection point, going through every possible restrictions we will face (web server / php.conf / suhosin...), rather than only test what can be sent via HTTP to the web server. (max_sendable now defaults to 0, meaning : to be auto-detected at "start")
+sqlsus now tests the presence of the uploader by interacting with the PHP script rather than GETing it via the web server (which could result in false positives)
+Setting an unknown variable now prints an error (instead of nothing).
+\download in backdoor (exec) mode now properly works on empty and non regular files (using file_get_contents if available).
+
+Bug Fixes
+---------
+Fixed a bug where a query returned nothing (inband only) if the first item fetched was 0 (the integer).
+Fixed regressions and bugs in the website crawler, such as not loading proxy preferences properly, retrying (sometimes A LOT) more than once a candidate directory, and more..
+Fixed a regression (since 0.5rc1) where downloading a non-existing file (using "download") was creating a local file with \x06 in it rather than not storing anything.
+Fixed a regression (since 0.5rc1) where fetching a NULL item in blind mode would store "6" instead.
+"get count" now respects the limit set by max_subqueries.
+Ctrl-C now properly stops sqlsus at the end of the current command when multiple commands are given on the command line.
+
+
+Version 0.5
+===========
+Never got released publicly
+
+
+Version 0.5 RC 1
+================
+New Features / Improvements
+---------------------------
+Added command autoconf, to let sqlsus find the best value for max_sendable.
+Added command genconf, to generate a configuration file reflecting current variables. 
+Added command backdoor, to upload and control the sqlsus backdoor.
+Added option binary, for binary files download (and binary record grabbing) 
+Added option use_cookie_jar, to allow disabling of cookie support.
+Added option http_error_code, to set the HTTP error codes you want sqlsus to consider (for retry/exit).
+Added option http_error_retries, above which an error is thrown, instead of retrying indefinitely.
+Added option allow_override, so that one can disable default sqlsus behaviour which is: variables set in config are overriden by the ones set during an sqlsus session.
+Added option max_returned_length, for unlimited size support for file download.
+Added option uploader_name, specifying the (remote) filename to use for the tiny uploader.
+Added option backdoor_name, specifying the (remote) filename to use for the backdoor.
+Backdoor (and controller): Added upload & download functions, and made some improvements (magic quotes detection, custom error_handler).
+The backdoor controller as well as the backdoor itself have been integrated inside sqlsus (cmd: "backdoor"), fixing some bugs in the process. Your backdoor sessions are now logged into a file.
+sqlsus now automatically appends/prefixes url_start/url_end with a space, since not doing it was confusing some people.
+In blind mode, it no longer tries to find the number of columns to retrieve when a query has a LIMIT clause, resulting in less hits / faster retrieval.
+The tiny uploader now has a magic_quotes_gpc detection/removal routine so that no problem arises when it's uploaded in a magic_quotes_gpc enabled directory.
+You can now stack commands in non interactive mode (-e) using ";".
+conf.pm has been integrated as default values in sqlsus, you can now generate your conf using "sqlsus --genconf my.cfg" or, inside sqlsus : "genconf my.cfg"
+Some default values have been tweaked/optimised, generate a configuration file and read the comments for more information.
+Improvements have been made to the website crawler (used in "upload" or "backdoor" when uploading the tiny uploader)
+Every command now has an appropriate "help" (ex: help set).
+Command "force" has been renamed to "replay" and will replay the last "select" rather than the last command.
+Added datetime format to @regex_rlike: grabbing datetime() records in blind mode now takes 40% less hits for a minor tradeoff.
+Hits counting is now a done by a separate process communicating with sqlsus via UNIX sockets.
+Optimised stacked subqueries to allow even (a little) more chars than before to be sent to the web server.
+Errors / Warnings / etc.. are printed more consistently.
+
+Bug Fixes
+---------
+Changed the inter processes communication system to UNIX sockets, to avoid some situations caused by socketpair(), which could result in sqlsus hanging.
+"show count" now correctly displays the number of rows (0) when a table is empty.
+Fixed a greedy regex that could take ages to run in some cases (i.e. an empty table).
+Fixed a bug preventing "get count" from correctly use "max_sendable", which could lead the function to never end.
+Fixed a bug preventing SELECT DISTINCT statements items counting (prior to bruteforcing) from working in blind mode (impacting "find"), which could result in sqlsus grabbing more records than it should have, and then show NULL for the ones which should not be here.
+Fixed a bug in mass_query (inband queries likely to return more than one row) which could lead select/clone to stop before having grabbed all the available records in some fairly rare cases.
+Fixed a bug when using "get databases" before "get db" that was resulting in an empty table name added to the list.
+Removed a false indication in the configuration file stating that "processes" was only used for blind mode (it has been used for both inband and blind mode since 0.4).
+Mechanize (used in "upload") now correctly uses the configured user_agent.
+The mini uploader now uses proper php tags, so that it will work with short_open_tag set to off in php.ini.
+Using floating seconds for sleep() now really works. (sigh)
+Hits reported in inband are now reflecting reality (the ones not returning data were not being counted as they should)
+Fixed a bug where sqlsus was interpreting SQL when it should not: if SELECT * FROM <TABLE> was expanded to something like 'SELECT user,pass,accountLimit FROM <TABLE>', Limit was interpreted, and the query failed.
+Some fixes/enhancements here and there.
+
+
+Version 0.4.1
+============
+Bug Fixes
+---------
+Using floating seconds for sleep() now actually works.
+
+Version 0.4
+===========
+New Features / Improvements
+---------------------------
+New "brute" command, to bruteforce the names of the tables and columns (dictionnary / brute force).
+Multithreading support for inband queries.
+Added option to convert spaces to /**/.
+Added version information display when starting sqlsus.
+
+Bug Fixes
+---------
+Fixed a bug where "get columns" would use one file descriptor per column when storing the structure in the local sqlite db, which could result in a croak because of too many files opened.
+Small fixes/enhancements here and there.
+
+
+Version 0.3
+===========
+New Features / Improvements
+---------------------------
+Full SQLite backend, storing queries / results, databases structure, variables into a local SQLite database.
+Added "clone" command to clone some columns, a table, or the full database into a local SQLite database.
+"clone" has a resume ability, allowing to continue accross sessions.
+Rewrite of the blind injection engine (A LOT faster now):.
+- keep all the threads busy with micro tasks (huge speed improvement).
+- regular expression matching for each item, prior to bruteforcing (huge drop in the number of hits required).
+- progress meter.
+Added cookie support.
+Possibility to change the current database ("use xxx"), and still be able to use all the commands transparently.
+Better query shortening, allowing even more data to be fetched per server hit.
+Use of BINARY for inband injections, to avoid collation issues.
+User controlled "UNION SELECT" string.
+Got rid of IPC::Shareable, using socketpair() instead.
+Added "test" command for boolean query testing from the command line (blind mode).
+Inband injection is now only contained in subqueries, to allow more complex sql injection scenarios.
+Improved "get columns" to minimize the hits in the inband query scenario.
+Improved the web crawler to minimize the hits.
+exec mode STDERR redirected to STDOUT in shell/backdoor.php.
+Minor improvement of some commands behaviours (show all / show db / set).
+Added, modified, and removed some options in conf.pm, as well as via "set".
+sqlsus does not die anymore if addhistory is not available from the Terminal module.
+Lots of small changes...
+
+Bug Fixes
+---------
+Blind injection columns result are now always properly ordered.
+Multiple rows inband injection doesn't stop on an empty item if it is last on one fetch anymore.
+Only loop on relevant HTTP errors, not all errors > 400.
+The web crawler now properly loads HTTP proxy / credentials / cookies.
+"eval" now works properly.
+"get count" now caps to max_sendable.
+URI encoding of the characters + and # when using get.
+Changed the way sqlsus finds the suitable columns for injection, to avoid false positives.
+Lots of small bug fixes...
+
+
+Version 0.2
+===========
+New Features / Improvements
+---------------------------
+No longer look for error messages in the HTML when trying to guess the number of columns in a inband mode injection, directly look for expected hex values instead.
+Added sleep_after_hit option : basic sleep() after each hit.
+Added max_subqueries option : maximum number of subqueries to use per query.
+Added max_array_elements option : above which data will be dumped to disk (to $dump_array_file), to avoid huge RAM consumption when fecthing a huge amount of data.
+Added some core options.
+Allowed more variables to be changed via "set".
+Speeded up the stacking function.
+Added a progress indicator for inband mass queries, telling which rows are being fetched at the moment.
+
+Bug Fixes
+---------
+Fixed an inconsistency that prevented the results from being logged with the same charset as they were displayed.
+Now correctly displays what has been fetched if the user breaks using Ctrl-C.
+Lots of fixes here and there.
+
+
+Version 0.1
+===========
+First release.
